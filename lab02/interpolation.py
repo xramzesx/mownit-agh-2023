@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 #### TEST FUNCTION ####
 
 def fun(x):
-    return np.cos(x) * x
+    return np.exp(-np.sin(2*x)) + np.sin(2 * x) - 1
 
 #### SPACES ####
 
@@ -63,8 +63,10 @@ def newton_interpolation(points, x : float) -> float:
 
 #### VISUALISATION ####
 
-def visualise(start, stop, n, function, title, type = "even" ):
+def visualise(start, stop, n, function, title, type = "even", option = "save" ):
     
+    plt.clf()
+
     #### GENERATE PROPER SPACE ####
     
     if type == "even":
@@ -82,7 +84,7 @@ def visualise(start, stop, n, function, title, type = "even" ):
 
     domain = even_space( start, stop, 10000 )
 
-    plt.title(f'Wykres {title} - {type} space')
+    plt.title(f'{title} - {type} - n = {n}')
     plt.xlabel("x")
     plt.ylabel("y")
 
@@ -93,21 +95,25 @@ def visualise(start, stop, n, function, title, type = "even" ):
     
     #### INTERSECTIONS ####
 
-    plt.scatter(X,Y, label="Points")
+    plt.scatter(X,Y)
 
     #### SHOW ####
 
     plt.legend()
-    plt.show()
+
+    if option == 'save':
+        plt.savefig(f'plots/{title}.{type}.{n}.png')
+    if option == 'show':
+        plt.show()
 
 #### TESTS ####
 
 start = 0
-stop = 20
-n = 20
+stop = 3 * np.pi
 
-visualise(start, stop, n, lagrange_interpolation, "Lagrange'a" , "even")
-visualise(start, stop, n, newton_interpolation, "Newton'a" , "even")
+for n in [3, 4, 5, 7, 10, 15, 20]:
+    visualise(start, stop, n, lagrange_interpolation, "Lagrange" , "even")
+    visualise(start, stop, n, newton_interpolation, "Newton" , "even")
 
-visualise(start, stop, n, lagrange_interpolation, "Lagrange'a" , "chebyschev")
-visualise(start, stop, n, newton_interpolation, "Newton'a" , "chebyschev")
+    visualise(start, stop, n, lagrange_interpolation, "Lagrange" , "chebyschev")
+    visualise(start, stop, n, newton_interpolation, "Newton" , "chebyschev")
