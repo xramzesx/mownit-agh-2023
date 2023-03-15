@@ -63,7 +63,7 @@ def newton_interpolation(points, x : float) -> float:
 
 #### VISUALISATION ####
 
-def visualise(start, stop, n, function, type = "even" ):
+def visualise(start, stop, n, function, title, type = "even" ):
     
     #### GENERATE PROPER SPACE ####
     
@@ -82,15 +82,23 @@ def visualise(start, stop, n, function, type = "even" ):
 
     domain = even_space( start, stop, 10000 )
 
-    plt.title("Wykres")
+    plt.title(f'Wykres {title} - {type} space')
     plt.xlabel("x")
     plt.ylabel("y")
+
+    #### PLOTS ####
+    
     plt.plot(domain, fun(domain), label = "Function",color="red")
     plt.plot(domain, function(points, domain), label = "Interpolation")
+    
+    #### INTERSECTIONS ####
+
+    plt.scatter(X,Y, label="Points")
+
+    #### SHOW ####
+
     plt.legend()
     plt.show()
-
-    return
 
 #### TESTS ####
 
@@ -98,5 +106,8 @@ start = 0
 stop = 20
 n = 20
 
-visualise(start, stop, n, lagrange_interpolation, "chebyschev")
-visualise(start, stop, n, newton_interpolation, "even")
+visualise(start, stop, n, lagrange_interpolation, "Lagrange'a" , "even")
+visualise(start, stop, n, newton_interpolation, "Newton'a" , "even")
+
+visualise(start, stop, n, lagrange_interpolation, "Lagrange'a" , "chebyschev")
+visualise(start, stop, n, newton_interpolation, "Newton'a" , "chebyschev")
