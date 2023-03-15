@@ -1,3 +1,28 @@
+import numpy as np
+from collections import deque
+from matplotlib import pyplot as plt 
+
+#### TEST FUNCTION ####
+
+def fun(x):
+    return np.cos(x) * x
+
+#### SPACES ####
+
+def even_space(start, stop, n):
+    return np.linspace(start, stop, n)
+
+def chebyschev_space(start, stop, n):
+    result = deque()
+
+    for i in range(1, n+1):
+        cosinus = np.cos( (2 * i - 1) / (2 * n) * np.pi )
+        result.append( 1/2 * (start + stop) - 1/2 * (stop - start) * cosinus )
+    
+    return np.array(result)
+
+#### INTERPOLATIONS ####
+
 def lagrange_interpolation(points, x):
     result = 0
 
@@ -18,8 +43,10 @@ def newton_interpolation(points, x : float) -> float:
     n = len(points)
     _x, _y = (0,1)
 
+    # Rewrite y to differences array
     for i in range(n):
         dy[i][0] = points[i][_y]
+
     # Count didived difference
     for j in range(1, n):
         for i in range(n - j):
@@ -34,8 +61,42 @@ def newton_interpolation(points, x : float) -> float:
 
     return result
 
+#### VISUALISATION ####
 
-points = [ (0,2), (1,3), (2,12), (5,147) ]
-x = 12
-print(f'Test {lagrange_interpolation(points, x)}')
-print(f'Test {newton_interpolation(points, x)}')
+def visualise(start, stop, n, function, type = "even" ):
+    
+    #### GENERATE PROPER SPACE ####
+    
+    if type == "even":
+        X = even_space(start, stop, n)
+    elif type == "chebyschev":
+        X = chebyschev_space(start, stop, n)
+    else:
+        print("Specify proper type")
+        return
+    
+    Y = fun(X)
+    points = np.column_stack((X, Y))
+
+    #### GENERATE GRAPH ####
+
+    domain = even_space( start, stop, 10000 )
+
+    plt.title("Wykres")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.plot(domain, fun(domain), label = "Function",color="red")
+    plt.plot(domain, function(points, domain), label = "Interpolation")
+    plt.legend()
+    plt.show()
+
+    return
+
+#### TESTS ####
+
+start = 0
+stop = 20
+n = 20
+
+visualise(start, stop, n, lagrange_interpolation, "chebyschev")
+visualise(start, stop, n, newton_interpolation, "even")
