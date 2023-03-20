@@ -113,14 +113,98 @@ def visualise(start, stop, n, function, title, type = "even", option = "save" ):
     if option == 'show':
         plt.show()
 
+#### ERRORS ####
+
+def max_error(interpolation, points, start, stop, n = 501):
+
+    error_function = np.vectorize(
+        lambda x: np.abs(
+            fun(x) - interpolation(points, x)
+        ) 
+    )
+    return np.max(
+        error_function( 
+            even_space(start, stop, n) 
+        )
+    )
+
+def sum_error(interpolation, points, start, stop, n = 501):
+    error_function = np.vectorize(
+        lambda x: (
+            fun(x) - interpolation(points, x)
+        ) ** 2
+    )
+
+    return np.sqrt( np.sum(
+        error_function(
+            even_space(start, stop, n)
+        )
+    )) / (n - 1)
+
+
+def get_errors(
+    interpolation, 
+    start, 
+    stop,
+    type,
+    base_n, 
+    accuracy_n = 501
+) -> tuple:
+
+    if type == "even":
+        X = even_space(start, stop, base_n)
+    elif type == "chebyschev":
+        X = chebyschev_space(start, stop, base_n)
+    else:
+        print("Specify proper type")
+        return (None, None)
+
+    Y = fun(X)
+    points = np.column_stack((X, Y))
+
+
+    return (
+        max_error(interpolation, points, start, stop, accuracy_n),
+        sum_error(interpolation, points, start, stop, accuracy_n)
+    )
+
+def test_interpolation(interpolation, start, stop, point_counts):
+
+    #### CONSTANTS ####
+
+    max_err = 0
+    sum_err = 1
+    
+    print("n\teven max\tchebyschev max\teven square\tchebyschev square")
+
+    for n in point_counts:
+        interpolation_even = get_errors(interpolation, start, stop, "even", n)
+        interpolation_chebyschev = get_errors(interpolation, start, stop, "chebyschev", n)
+
+        print(
+            f'{n}\t'
+            f'{interpolation_even[max_err]:.6e}\t'
+            f'{interpolation_chebyschev[max_err]:.6e}\t'
+            f'{interpolation_even[sum_err]:.6e}\t'
+            f'{interpolation_chebyschev[sum_err]:.6e}'
+        )
+    
 #### TESTS ####
 
 start = 0
 stop = 3 * np.pi
 
-for n in [3, 4, 5, 7, 10, 15, 20]:
+point_counts = [3, 4, 5, 7, 10, 15, 20, 100]
+
+for n in point_counts:
     visualise(start, stop, n, lagrange_interpolation, "Lagrange" , "even")
     visualise(start, stop, n, newton_interpolation, "Newton" , "even")
 
     visualise(start, stop, n, lagrange_interpolation, "Lagrange" , "chebyschev")
     visualise(start, stop, n, newton_interpolation, "Newton" , "chebyschev")
+
+new_points = sorted( point_counts + [20 + 10 * n for n in range(1, 8)] )
+
+print(new_points)
+test_interpolation(lagrange_interpolation, start, stop, new_points)
+test_interpolation(newton_interpolation, start, stop, new_points)
