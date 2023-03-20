@@ -2,6 +2,13 @@ import numpy as np
 from collections import deque
 from matplotlib import pyplot as plt 
 
+#### TRANSLATION ####
+
+translation = {
+    "even" : "równomierny",
+    "chebyschev" : "Chebyschewa"
+}
+
 #### TEST FUNCTION ####
 
 def fun(x):
@@ -80,16 +87,16 @@ def visualise(start, stop, n, function, title, type = "even", option = "save" ):
     Y = fun(X)
     points = np.column_stack((X, Y))
 
-    #### GENERATE GRAPH ####
+    #### GENERATE PLOT ####
 
     domain = even_space( start, stop, 10000 )
 
-    plt.title(f'{title} - {type} - n = {n}')
+    plt.title(f'{title} - {translation[type]} - n = {n}')
     plt.xlabel("x")
     plt.ylabel("y")
 
     #### PLOTS ####
-    
+
     plt.plot(domain, fun(domain), label = "Function",color="red")
     plt.plot(domain, function(points, domain), label = "Interpolation")
     
