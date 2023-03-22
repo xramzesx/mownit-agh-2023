@@ -9,6 +9,13 @@ translation = {
     "chebyschev" : "Chebyschewa"
 }
 
+#### CONSTANTS ####
+
+plots_dir_path = "plots"
+
+if not os.path.exists(plots_dir_path):
+    os.makedirs(plots_dir_path)
+
 #### TEST FUNCTION ####
 
 def fun(x):
@@ -71,7 +78,8 @@ def newton_interpolation(points, x : float) -> float:
 #### VISUALISATION ####
 
 def visualise(start, stop, n, function, title, type = "even", option = "save" ):
-    
+    global plots_dir_path
+
     plt.clf()
 
     #### GENERATE PROPER SPACE ####
@@ -109,7 +117,7 @@ def visualise(start, stop, n, function, title, type = "even", option = "save" ):
     plt.legend()
 
     if option == 'save':
-        plt.savefig(f'plots/{title}.{type}.{n}.png')
+        plt.savefig(f'{plots_dir_path}/{title}.{type}.{n}.png')
     if option == 'show':
         plt.show()
 
