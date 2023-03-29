@@ -215,17 +215,13 @@ def hermite_interpolation(nodes, derivatives):
     for i in range(n):
         dy[i][0] = fun( points[i][_x])
     
-    # Count divided difference
-    for j in range(1, n):
-        for i in range(n - j):
-            if points[i][_x] == points[i+j][_x]:
-                dy[i][j] = derivatives[points[j][_k]](points[j][_x]) \
-                         / np.math.factorial(j)
+    # # Count divided difference
+    for k in range(1, n):
+        for w in range( n - k ):
+            if points[w][_x] == points[w+k][_x]:
+                dy[w][k] = derivatives[1](points[w+k][_x]) / np.math.factorial(k)
             else:
-                dy[i][j] = (dy[i + 1][j - 1] - dy[i][j - 1]) / (
-                    points[i + j][_x] - points[i][_x]
-                )
-
+                dy[w][k] = (dy[w + 1][k - 1] - dy[w][k - 1]) / (points[w+k][_x] - points[w][_x])
 
     def result(x: float):
         nonlocal dy, _x, n
