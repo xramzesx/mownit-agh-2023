@@ -24,6 +24,9 @@ if not os.path.exists(plots_dir_path):
 def fun(x):
     return np.exp(-np.sin(2*x)) + np.sin(2 * x) - 1
 
+def d_fun(x):
+    return 2 * (1 - np.exp( -np.sin( 2 * x ))) * np.cos(2 * x)
+
 #### SPACES ####
 
 def even_space(start, stop, n):
@@ -34,20 +37,24 @@ def chebyschev_space(start, stop, n):
 
     for i in range(1, n+1):
         cosinus = np.cos( (2 * i - 1) / (2 * n) * np.pi )
-        result.append( 1/2 * (start + stop) - 1/2 * (stop - start) * cosinus )
+        result.append( 1/2 * (start + stop) + 1/2 * (stop - start) * cosinus )
     
     return np.array(result)
 
 #### DERIVATIVES ####
 
 def get_derivatives(f, max_derivatives ):
+    if max_derivatives == 2:
+        print("uses analitical derivatives")
+        return [fun, d_fun]
+
     return [nd.Derivative(f, n=i) for i in range(max_derivatives + 1)]
 
 
 
 #### VISUALISATION ####
 
-def visualise(start, stop, n,m, function, title, type = "even", option = "save" ):
+def visualise(start, stop, n, m, function, title, type = "even", option = "save" ):
     global plots_dir_path
 
     plt.clf()
@@ -62,10 +69,10 @@ def visualise(start, stop, n,m, function, title, type = "even", option = "save" 
         print("Specify proper type")
         return
     
-    nodes, derivatives = prepare_nodes(start, stop, n, m)
+    nodes, derivatives = prepare_nodes(start, stop, n, m, type)
 
     interpolated_f = function(nodes, derivatives)
-    # Y = fun(X)
+
     #### GENERATE PLOT ####
 
     domain = even_space( start, stop, 10000 )
@@ -81,7 +88,9 @@ def visualise(start, stop, n,m, function, title, type = "even", option = "save" 
     
     #### INTERSECTIONS ####
 
-    # plt.scatter(X,Y)
+    Y = fun(X)
+
+    plt.scatter(X,Y)
 
     #### SHOW ####
 
@@ -94,11 +103,10 @@ def visualise(start, stop, n,m, function, title, type = "even", option = "save" 
 
 #### ERRORS ####
 
-def max_error(interpolation, points, start, stop, n = 501):
-
+def max_error(interpolation, nodes, derivatives, start, stop, n = 501, base_m=2):
     error_function = np.vectorize(
         lambda x: np.abs(
-            fun(x) - interpolation(points, x)
+            fun(x) - interpolation(nodes, derivatives)(x)
         ) 
     )
     return np.max(
@@ -107,10 +115,10 @@ def max_error(interpolation, points, start, stop, n = 501):
         )
     )
 
-def sum_error(interpolation, points, start, stop, n = 501):
+def sum_error(interpolation, nodes, derivatives, start, stop, n = 501, base_m = 2):
     error_function = np.vectorize(
         lambda x: (
-            fun(x) - interpolation(points, x)
+            fun(x) - interpolation(nodes, derivatives)(x)
         ) ** 2
     )
 
@@ -127,26 +135,18 @@ def get_errors(
     stop,
     type,
     base_n, 
+    base_m = 2,
     accuracy_n = 501
 ) -> tuple:
 
-    if type == "even":
-        X = even_space(start, stop, base_n)
-    elif type == "chebyschev":
-        X = chebyschev_space(start, stop, base_n)
-    else:
-        print("Specify proper type")
-        return (None, None)
-
-    Y = fun(X)
-    points = np.column_stack((X, Y))
+    nodes, derivatives = prepare_nodes(start, stop, base_n, base_m, type)
 
     return (
-        max_error(interpolation, points, start, stop, accuracy_n),
-        sum_error(interpolation, points, start, stop, accuracy_n)
+        max_error(interpolation, nodes, derivatives, start, stop, accuracy_n, base_m=base_m),
+        sum_error(interpolation, nodes, derivatives, start, stop, accuracy_n, base_m=base_m)
     )
 
-def test_interpolation(interpolation, start, stop, point_counts):
+def test_interpolation(interpolation, start, stop, point_counts, m):
 
     #### CONSTANTS ####
 
@@ -156,8 +156,8 @@ def test_interpolation(interpolation, start, stop, point_counts):
     print("n\teven max\tchebyschev max\teven square\tchebyschev square")
 
     for n in point_counts:
-        interpolation_even = get_errors(interpolation, start, stop, "even", n)
-        interpolation_chebyschev = get_errors(interpolation, start, stop, "chebyschev", n)
+        interpolation_even = get_errors(interpolation, start, stop, "even", n, base_m=m)
+        interpolation_chebyschev = get_errors(interpolation, start, stop, "chebyschev", n, base_m = m)
 
         print(
             f'{n}\t'
@@ -173,51 +173,83 @@ start = 0
 stop = 3 * np.pi
 
 
-n = 20
-m = 10
+n = 10
+m = 2
+def divided_differences(points, derivatives, size):
+    diffs = [[0 for _ in range(size)] for _ in range(size)]
+
+    _x, _k = (0 , 1)
+
+    for i in range(size):
+        diffs[i][0] = fun(points[i][_x])
+
+    for j in range(1, size):
+        for i in range(size - j):
+            if points[i][_x] == points[i+j][_x]:
+                diffs[i][j] = derivatives[points[j][_k]](points[j][_x]) \
+                         / np.math.factorial(j)
+            else:
+                diffs[i][j] = (diffs[i + 1][j - 1] - diffs[i][j - 1]) / (
+                    points[i + j][_x] - points[i][_x]
+                )
+    print(size, diffs[0][size - 1])
+    return diffs[0][size - 1]
+
 def hermite_interpolation(nodes, derivatives):
     points = []
 
+    ### CONSTANTS ###
     _x, _k = (0,1)
 
-    for x_i, k_i in nodes:
+    #### NODES TO POINTS ####
+    # k_i -> derivative degree
+    # x_i -> argument x
+    for x_i, k_i in reversed(nodes):
         for m_i in range(int(k_i)):
             points.append((x_i, m_i))
 
     n = len(points)
-
     dy = [ [0 for _ in points] for _ in points ]
-
+    
     # Rewrite y to differences array
     for i in range(n):
-        dy[i][0] = points[i][_x]
-
+        dy[i][0] = fun( points[i][_x])
+    
     # Count divided difference
     for j in range(1, n):
         for i in range(n - j):
             if points[i][_x] == points[i+j][_x]:
-                dy[i][j] = derivatives[points[j][_k]](points[j][_x]) / np.math.factorial(j)
+                dy[i][j] = derivatives[points[j][_k]](points[j][_x]) \
+                         / np.math.factorial(j)
             else:
-                dy[i][j] = (dy[i + 1][j - 1] - dy[i][j - 1]) / (points[i + j][_x] - points[i][_x])
+                dy[i][j] = (dy[i + 1][j - 1] - dy[i][j - 1]) / (
+                    points[i + j][_x] - points[i][_x]
+                )
+
 
     def result(x: float):
-        multipler = 1
-        res = dy[0][0]
+        nonlocal dy, _x, n
 
-        for i in range( 1, n ):
-            multipler *= (x - points[i - 1][_x])
+        multipler = 1
+        res = 0
+        for i in range(n):
             res += dy[0][i] * multipler
+            multipler *= (x - points[i][_x])
+
         return res
 
     return result
-    multipler = 1
 
-def prepare_nodes( start, stop, n, m ):
-    nodes = chebyschev_space(start, stop, m)
-    # nodes = even_space(start, stop, m)
 
-    initial_k = np.vectorize(lambda x: (x, 1))
+def prepare_nodes( start, stop, n, m, type ):
+    nodes = chebyschev_space(start, stop, n) if type == "chebyschev" else even_space(start, stop, n)
+   
+    initial_k = np.vectorize(lambda x: (x, m))
     nodes = np.column_stack(initial_k(nodes))
+
+    derivatives = get_derivatives(fun, m)
+
+    return (nodes, derivatives)
 
     remaining = n - m + 1
     maximum = 1
@@ -234,4 +266,10 @@ def prepare_nodes( start, stop, n, m ):
     print(nodes)
     return (nodes, derivatives)
 
-visualise(start, stop, n, m, hermite_interpolation ,"Hermit")
+point_counts = [3, 4, 5, 7,8, 9, 10, 15, 20]
+
+for n in point_counts:
+    visualise(start, stop, n, m, hermite_interpolation, "Hermite" , "even", "save")
+
+    visualise(start, stop, n, m, hermite_interpolation, "Hermite" , "chebyschev", "save")
+test_interpolation(hermite_interpolation, start, stop, point_counts, m)
