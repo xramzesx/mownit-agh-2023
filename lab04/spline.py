@@ -7,7 +7,9 @@ from matplotlib import pyplot as plt
 
 translation = {
     "even" : "równomierny",
-    "chebyschev" : "Chebyschewa"
+    "chebyschev" : "Chebyschewa",
+    "quotient" : "Iloraz różnicowy",
+    "natural": "'Free boundary'"
 }
 
 #### CONSTANTS ####
