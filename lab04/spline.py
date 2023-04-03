@@ -87,11 +87,11 @@ def visualise(start, stop, n, function, title, type = "even", spline_type = "quo
 
 #### ERRORS ####
 
-def max_error(interpolation, points, start, stop, n = 501):
+def max_error(interpolation, start, stop, n = 501):
 
     error_function = np.vectorize(
         lambda x: np.abs(
-            fun(x) - interpolation(points, x)
+            fun(x) - interpolation(x)
         ) 
     )
     return np.max(
@@ -100,10 +100,10 @@ def max_error(interpolation, points, start, stop, n = 501):
         )
     )
 
-def sum_error(interpolation, points, start, stop, n = 501):
+def sum_error(interpolation, start, stop, n = 501):
     error_function = np.vectorize(
         lambda x: (
-            fun(x) - interpolation(points, x)
+            fun(x) - interpolation( x)
         ) ** 2
     )
 
@@ -123,20 +123,16 @@ def get_errors(
     accuracy_n = 501
 ) -> tuple:
 
-    if type == "even":
-        X = even_space(start, stop, base_n)
-    elif type == "chebyschev":
-        X = chebyschev_space(start, stop, base_n)
-    else:
-        print("Specify proper type")
-        return (None, None)
+    X = even_space(start, stop, base_n)
 
     Y = fun(X)
     points = np.column_stack((X, Y))
 
+    f = interpolation(points, type)
+
     return (
-        max_error(interpolation, points, start, stop, accuracy_n),
-        sum_error(interpolation, points, start, stop, accuracy_n)
+        max_error(f, start, stop, accuracy_n),
+        sum_error(f, start, stop, accuracy_n)
     )
 
 def test_interpolation(interpolation, start, stop, point_counts):
@@ -146,18 +142,18 @@ def test_interpolation(interpolation, start, stop, point_counts):
     max_err = 0
     sum_err = 1
     
-    print("n\teven max\tchebyschev max\teven square\tchebyschev square")
+    print("n\tcubic max\tnatural max\tcubic square\tnatural square")
 
     for n in point_counts:
-        interpolation_even = get_errors(interpolation, start, stop, "even", n)
-        interpolation_chebyschev = get_errors(interpolation, start, stop, "chebyschev", n)
+        interpolation_cubic = get_errors(interpolation, start, stop, "quotient", n)
+        interpolation_natural = get_errors(interpolation, start, stop, "natural", n)
 
         print(
             f'{n}\t'
-            f'{interpolation_even[max_err]:.6e}\t'
-            f'{interpolation_chebyschev[max_err]:.6e}\t'
-            f'{interpolation_even[sum_err]:.6e}\t'
-            f'{interpolation_chebyschev[sum_err]:.6e}'
+            f'{interpolation_cubic[max_err]:.6e}\t'
+            f'{interpolation_natural[max_err]:.6e}\t'
+            f'{interpolation_cubic[sum_err]:.6e}\t'
+            f'{interpolation_natural[sum_err]:.6e}'
         )
     
 ### GETTERS ###
@@ -303,3 +299,8 @@ for n in point_counts:
 
     visualise(start, stop, n, cubic_spline_interpolation, "Spline sześcienny", "even", "natural")
     visualise(start, stop, n, quadratic_spline_interpolation, "Spline kwadratowy", "even", "natural")
+
+new_points = sorted( point_counts + [30 + 10 * n for n in range(1, 7)] )
+
+test_interpolation(cubic_spline_interpolation, start, stop, new_points)
+test_interpolation(quadratic_spline_interpolation, start, stop, new_points)
