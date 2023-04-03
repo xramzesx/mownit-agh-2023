@@ -39,7 +39,7 @@ def chebyschev_space(start, stop, n):
 
 #### VISUALISATION ####
 
-def visualise(start, stop, n, function, title, type = "even", spline_type = "cubic", option = "save" ):
+def visualise(start, stop, n, function, title, type = "even", spline_type = "quotient", option = "save" ):
     global plots_dir_path
 
     plt.clf()
@@ -61,7 +61,7 @@ def visualise(start, stop, n, function, title, type = "even", spline_type = "cub
 
     domain = even_space( start, stop, 10000 )
 
-    plt.title(f'{title} - {translation[type]} - n = {n}')
+    plt.title(f'{title} - {translation[spline_type]} - n = {n}')
     plt.xlabel("x")
     plt.ylabel("y")
 
@@ -81,7 +81,7 @@ def visualise(start, stop, n, function, title, type = "even", spline_type = "cub
     plt.legend()
 
     if option == 'save':
-        plt.savefig(f'{plots_dir_path}/{title}.{type}.{n}.png')
+        plt.savefig(f'{plots_dir_path}/{title}.{type}.{spline_type}.{n}.png')
     if option == 'show':
         plt.show()
 
@@ -203,7 +203,7 @@ def get_z(points, type):
 
     if type == "natural":
         cache[0] = 0
-    elif type == "cubic":
+    elif type == "quotient":
         cache[0] = delta[0]
 
     for i in range(1, len(points)):
@@ -211,7 +211,7 @@ def get_z(points, type):
 
     return cache
 
-def generate_matrix(points, type = "cubic" ):
+def generate_matrix(points, type = "quotient" ):
     n =     len(points)
     h =     get_h(points)
     delta  = get_delta(points, 1)
@@ -232,7 +232,7 @@ def generate_matrix(points, type = "cubic" ):
         
     ### BOUNDATIRIES ###
 
-    if type == "cubic":
+    if type == "quotient":
 
         left_matrix[0][0] =   h[0]
         left_matrix[0][1] = - h[1]
@@ -244,8 +244,12 @@ def generate_matrix(points, type = "cubic" ):
         right_matrix[-1] = h[0] ** 2 * delta3[-1]
 
 
+    if type == "natural":
+        left_matrix[0][0] = 1
+        left_matrix[-1][-1] = 1
 
     return np.linalg.solve(left_matrix, right_matrix)
+
 #### INTERPOLATION ####
 
 def cubic_spline_interpolation(points, type):
@@ -286,12 +290,16 @@ def quadratic_spline_interpolation( points, type ):
         return (z[i + 1] - z[i]) / (2 * (points[i + 1][_x] - points[i][_x])) * (x - points[i][_x]) ** 2 + z[i] * (x - points[i][_x]) + points[i][_y]
     
     return interpolation
+
 #### TESTS ####
 
 start = 0
 stop = 3 * np.pi
-point_counts = [ 4, 5, 7,8, 9, 10, 11, 12, 15, 20, 100 ]
+point_counts = [ 4, 5, 7,8, 9, 10, 11, 12, 15, 20, 30, 100 ]
 
 for n in point_counts:
-    visualise(start, stop, n, cubic_spline_interpolation, "Spline sześcienny", "even", "cubic")
-    visualise(start, stop, n, quadratic_spline_interpolation, "Spline kwadratowy", "even", "cubic")
+    visualise(start, stop, n, cubic_spline_interpolation, "Spline sześcienny", "even", "quotient")
+    visualise(start, stop, n, quadratic_spline_interpolation, "Spline kwadratowy", "even", "quotient")
+
+    visualise(start, stop, n, cubic_spline_interpolation, "Spline sześcienny", "even", "natural")
+    visualise(start, stop, n, quadratic_spline_interpolation, "Spline kwadratowy", "even", "natural")
