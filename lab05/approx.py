@@ -146,22 +146,51 @@ def test_interpolation(interpolation, start, stop, point_counts, function_counts
     max_err = 0
     sum_err = 1
     
-    print("n\tm\teven max\tchebyschev max\teven square\tchebyschev square")
+    w = len(point_counts)
+    k = len(function_counts)
 
-    for i in range(len(point_counts)):
+    max_errors = np.zeros((w, k))
+    sum_errors = np.zeros((w, k))
+
+    for i in range(w):
         n = point_counts[i]
-        m = function_counts[i]
-        interpolation_cubic = get_errors(interpolation, start, stop, "even", n, m)
-        interpolation_natural = get_errors(interpolation, start, stop, "chebyschev", n, m)
+        for j in range(k):
+            m = function_counts[j]
 
-        print(
-            f'{n}\t'
-            f'{m}\t'
-            f'{interpolation_cubic[max_err]:.6e}\t'
-            f'{interpolation_natural[max_err]:.6e}\t'
-            f'{interpolation_cubic[sum_err]:.6e}\t'
-            f'{interpolation_natural[sum_err]:.6e}'
-        )
+            max_errors[i][j], sum_errors[i][j] = get_errors(interpolation, start, stop, "even", n, m)
+
+    print("n\m", end = "\t")
+
+    for m in function_counts:
+        print(m, end="\t")
+    
+    print()
+
+    for i in range(w):
+        print(point_counts[i], end="\t")
+        for j in range(k):
+            if point_counts[i] < function_counts[j]:
+                print("------------", end="\t")
+            else:
+                print(f"{max_errors[i][j]:.6e}", end="\t")
+        print()
+
+    print("n\m", end = "\t")
+
+    for m in function_counts:
+        print(m, end="\t")
+    
+    print()
+
+    for i in range(w):
+        print(point_counts[i], end="\t")
+
+        for j in range(k):
+            if point_counts[i] < function_counts[j]:
+                print("------------", end="\t")
+            else:
+                print(f"{sum_errors[i][j]:.6e}", end="\t")
+        print()
 
 #### APPROXIMATION ####
 
