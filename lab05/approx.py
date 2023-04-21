@@ -1,9 +1,12 @@
+import os
+import numpy as np
+from collections import deque
 from matplotlib import pyplot as plt 
 
 #### TRANSLATION ####
 
 translation = {
-    "even" : "równomierny",
+    "even" : "w. równoodległe",
     "chebyschev" : "Czebyszewa",
 }
 
@@ -58,7 +61,7 @@ def visualise(start, stop, n, m, function, title, type = "even", option = "save"
 
     domain = even_space( start, stop, 10000 )
 
-    plt.title(f'{title} - {translation[type]} - n = {n}')
+    plt.title(f'{title} - n = {n} - m={m}')
     plt.xlabel("x")
     plt.ylabel("y")
 
@@ -208,16 +211,17 @@ stop = 3 * np.pi
 
 test_count = 7
 offset_n = 20
-point_counts = [offset_n + 5 * x for x in range(1, test_count + 1)] + [100, 120]
-function_counts = [5 * x for x in range(1, test_count + 1)] + [50, 100]
 
-for i in range(len(point_counts)):
-    n = point_counts[i]
-    m = function_counts[i]
-    visualise(start, stop, n, m, algebraic_polynomial_approx, "Aproksymacja wielomianami algebraicznymi", "even")
-    visualise(start, stop, n, m, algebraic_polynomial_approx, "Aproksymacja wielomianami algebraicznymi", "chebyschev")
+point_counts = [4,6,8,10,12,14,25,30,35,40,45,50,55,60,65,70,75,80,85]
+function_counts = [3,4,5,8,9,10,11,12,15,20,25,30,35,40,45,50,55]
 
-new_points = sorted( point_counts + [ offset_n + 5 * n for n in range(test_count, 2 * test_count)] )
-new_functions = sorted( function_counts + [ 5 * n for n in range(test_count, 2 * test_count) ])
+for n in point_counts:
+    for m in function_counts:
+        if m > n: continue
+        visualise(start, stop, n, m, algebraic_polynomial_approx, "Aproksymacja wielomianami algebraicznymi", "even")
+
+
+new_points = sorted( list(set(point_counts + [ offset_n + 5 * n for n in range(test_count, 2 * test_count)] )))
+new_functions = sorted( list(set(function_counts + [ 5 * n for n in range(test_count, 2 * test_count) ])))
 
 test_interpolation(algebraic_polynomial_approx, start, stop, new_points, new_functions)
