@@ -61,7 +61,7 @@ def visualise(start, stop, n, m, function, title, type = "even", option = "save"
 
     domain = even_space( start, stop, 10000 )
 
-    plt.title(f'{title} - n = {n} - m={m}')
+    plt.title(f'{title} - n = {n} - m={2 * m}')
     plt.xlabel("x")
     plt.ylabel("y")
 
@@ -81,7 +81,7 @@ def visualise(start, stop, n, m, function, title, type = "even", option = "save"
     plt.legend()
 
     if option == 'save':
-        plt.savefig(f'{plots_dir_path}/{title}.{type}.{n}.{m}.png')
+        plt.savefig(f'{plots_dir_path}/{title}.{type}.{n}.{2 * m}.png')
     if option == 'show':
         plt.show()
 
@@ -156,7 +156,6 @@ def test_interpolation(interpolation, start, stop, point_counts, function_counts
         n = point_counts[i]
         for j in range(k):
             m = function_counts[j]
-            print(n, m)
 
             if n < 2 * m: continue
 
@@ -165,14 +164,14 @@ def test_interpolation(interpolation, start, stop, point_counts, function_counts
     print("n\m", end = "\t")
 
     for m in function_counts:
-        print(m, end="\t")
+        print(m * 2, end="\t")
     
     print()
 
     for i in range(w):
         print(point_counts[i], end="\t")
         for j in range(k):
-            if point_counts[i] < 2 * function_counts[j]:
+            if point_counts[i] < 4 * function_counts[j]:
                 print("------------", end="\t")
             else:
                 print(f"{max_errors[i][j]:.6e}", end="\t")
@@ -181,7 +180,7 @@ def test_interpolation(interpolation, start, stop, point_counts, function_counts
     print("n\m", end = "\t")
 
     for m in function_counts:
-        print(m, end="\t")
+        print(m * 2, end="\t")
     
     print()
 
@@ -189,51 +188,13 @@ def test_interpolation(interpolation, start, stop, point_counts, function_counts
         print(point_counts[i], end="\t")
 
         for j in range(k):
-            if point_counts[i] < 2 * function_counts[j]:
+            if point_counts[i] < 4 * function_counts[j]:
                 print("------------", end="\t")
             else:
                 print(f"{sum_errors[i][j]:.6e}", end="\t")
         print()
 
 #### APPROXIMATION ####
-
-def solve_equation(A, B):
-    return np.linalg.solve(A, B)
-
-def algebraic_polynomial_approx(points : np.array, m):
-
-    #### CONSTANTS ####
-    _x, _y = (0, 1)
-    n = len(points)
-
-    X, Y = points.T
-
-    ### WEIGHTS ###
-    weights = np.empty(n)
-    weights.fill(1)
-
-    ### MATRIXES ####
-    G = np.zeros((m, m))
-    B = np.zeros(m)
-
-    for i in range(m):
-        for j in range(m):
-            G[i][j] = np.sum(weights * X ** (i + j))
-
-    for i in range(m):
-        B[i] = np.sum(weights * Y * X ** (i))
-
-    A = solve_equation(G, B)
-
-    def approximation(x):
-        nonlocal A
-        result = 0
-        for j in range(len(A)):
-            result += A[j] * x ** j
-
-        return result
-
-    return approximation
 
 def scale_points(x):
     global start, stop
@@ -268,14 +229,16 @@ stop = 3 * np.pi
 test_count = 7
 offset_n = 20
 
-point_counts = [4,6,8,10,12,14,25,30,35,40,45,50,55,60,65,70,75,80,85]
-function_counts = [3,4,5,8,9,10,11,12,15,20,25,30,35,40,45,50,55]
+# note: we multiply function_counts by two each time when we want to get
+#       proper base function count
+
+point_counts = [4,6,8,10,12,14,25,30,35,40,45,50,55,60,65,70,75,80,85,100]
+function_counts = [3,4,5,8,9,10,11,12,15,20,25,30,35,40,45,50,55] 
 
 for n in point_counts:
     for m in function_counts:
-        if m + 1 > n: continue
+        if 4 * m > n: continue
         visualise(start, stop, n, m, trigonometric_approx, "Aproksymacja trygonometryczna", "even")
-
 
 new_points = sorted( list(set(point_counts + [ offset_n + 5 * n for n in range(test_count, 2 * test_count)] )))
 new_functions = sorted( list(set(function_counts + [ 5 * n for n in range(test_count, 2 * test_count) ])))
