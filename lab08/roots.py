@@ -35,22 +35,31 @@ def newton_rhapsod(x, stop_condition, e = epsilon, max_iter = max_iterations):
         tmp = x
         x -= fun(x) / dfun(x)        
         
-        if stop_condition(tmp, x):
+        if stop_condition(tmp, x, e):
             break
         cached.append(x)
     
     return cached
-    pass
 
-def generate_secants(x0):
+def generate_secants(start=None, stop = None):
+
     def secants(x, stop_condition, e = epsilon, max_iter = max_iterations):
-        x1 = x0
-        x2 = x
+        if start is None:
+            x1 = x
+            x2 = stop
+        else:
+            x1 = start
+            x2 = x
+
         cached = deque([x1,x2])
-        for _ in range(max_iter):
-            x1, x2 = x2, (x2 - x1) / (fun(x2) - fun(x1)) * fun(x2)
+        for _ in range(max_iter - 2):
+            x1, x2 = x2, x2 - (x2 - x1) / (fun(x2) - fun(x1)) * fun(x2)
             cached.append(x2)
-            if stop_condition(x1, x2):
+            if stop_condition(x1, x2, e):
+                break
+            if fun(x1) == fun(x2):
+                cached.pop()
+                cached.append(np.nan)
                 break
         return cached
 
@@ -81,17 +90,22 @@ def generate_result_table(solve_method, e = epsilon):
         print_row(x, solve_method(x, stop_distance_condition, e=e))
 
 def generate_result_matrix(solve_method, stop_condition, print_length = False):
-    global start, stop, n
+    global start, stop, n, min_epsilon, max_epsilon
 
     print("e\\x", end="\t")
 
-    for x in even_space(start, stop, n):
-        print(x,end="\t")
-    print()
+    ei_range = range(min_epsilon, max_epsilon + 1)
+    x_range = even_space(start, stop, n)
     
-    for ei in range(min_epsilon, max_epsilon + 1):
+
+    for ei in ei_range:
         print(f"10E{-ei}", end="\t")
-        for x in even_space(start, stop, n):
+
+    print()
+
+    for x in x_range:
+        print(x, end="\t")
+        for ei in ei_range:
             if print_length:
                 print(f"{len(solve_method(x, stop_condition, e = 10 ** (-ei)))}", end="\t")
             else:
@@ -101,8 +115,8 @@ def generate_result_matrix(solve_method, stop_condition, print_length = False):
 
 #### PRINT RESULTS ####
 
-secants_start = generate_secants(start)
-secants_stop  = generate_secants(stop)
+secants_start = generate_secants(start=start)
+secants_stop  = generate_secants(stop=stop)
 
 solve_functions = [newton_rhapsod, secants_start, secants_stop]
 
