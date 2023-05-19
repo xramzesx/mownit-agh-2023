@@ -1,5 +1,7 @@
-from collections import deque
+import os
 import numpy as np
+from collections import deque
+from matplotlib import pyplot as plt 
 
 #### CONSTANTS ####
 
@@ -8,13 +10,20 @@ stop  = 1.9
 
 n = int((stop - start) / 0.1 + 2)
 
-
 # epsilon == rho
 epsilon = 1/1000
 min_epsilon = 3
 max_epsilon = 13
 
 max_iterations = 1000
+
+#### PLOTS ####
+
+plots_dir_path = "plots"
+
+if not os.path.exists(plots_dir_path):
+    os.makedirs(plots_dir_path)
+
 
 #### FUNCTIONS ####
 
@@ -92,7 +101,7 @@ def generate_result_table(solve_method, e = epsilon):
 def generate_result_matrix(solve_method, stop_condition, print_length = False):
     global start, stop, n, min_epsilon, max_epsilon
 
-    print("e\\x", end="\t")
+    print("x\\e", end="\t")
 
     ei_range = range(min_epsilon, max_epsilon + 1)
     x_range = even_space(start, stop, n)
@@ -112,8 +121,56 @@ def generate_result_matrix(solve_method, stop_condition, print_length = False):
                 print(f"{solve_method(x, stop_condition, e = 10 ** (-ei))[-1]:.6e}", end="\t")
         print()
 
+def visualise(start, stop, pack, option = "save" ):
+    functions, title = pack
+
+    global plots_dir_path
+
+    plt.clf()
+    num = 10000
+
+    #### GENERATE PROPER SPACE ####
+    X = np.linspace(start, stop, num)
+    
+    Y = fun(X)
+    points = np.column_stack((X, Y))
+
+    #### GENERATE PLOT ####
+
+    domain = np.linspace(start, stop, num)
+
+    plt.title(f'{title}')
+    plt.xlabel("x")
+    plt.ylabel("y")
+
+    #### PLOTS ####
+
+    for function, label, color in functions:
+        plt.plot(domain, function(domain), label=label, color=color)
+
+    plt.grid()
+
+    #### SHOW ####
+
+    plt.legend()
+
+    if option == 'save':
+        plt.savefig(f'{plots_dir_path}/{title}.png')
+    if option == 'show':
+        plt.show()
+
+
 
 #### PRINT RESULTS ####
+
+function_packs = [
+    ([(fun, "funkcja", "red")], "Funkcja"),
+    ([(dfun, "pochodna" ,"blue")], "Pochodna"),
+    ([(fun, "funkcja", "red"),(dfun, "pochodna", "blue")], "Funkcja z pochodną"),
+]
+
+for pack in function_packs:
+    visualise(start, stop, pack)
 
 secants_start = generate_secants(start=start)
 secants_stop  = generate_secants(stop=stop)
