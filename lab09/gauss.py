@@ -1,4 +1,5 @@
 import numpy as np
+import scipy as sp
 
 def gauss_solver(A, B, float_type):
     AB = np.hstack((A,B))
@@ -49,6 +50,29 @@ def gauss_solver(A, B, float_type):
     return X
 
 
+def thomas_solver(A, B, float_type):
+    n = len(B)
+    
+    C = np.zeros(n).astype(float_type)
+    C[0] = A[0][1] / A[0][0]
+
+    for i in range(1, n - 1):
+        C[i] = A[i][i + 1] / (A[i][i] - A[i][i-1] * C[i-1])
+    
+    D = np.zeros(n).astype(float_type)
+    D[0] = B[0] / A[0][0]
+
+    for i in range(1, n):
+        D[i] = (B[i] - A[i][i-1] * D[i - 1]) / (A[i][i] - A[i][i-1] * C[i-1])
+
+    X = np.zeros((n, 1)).astype(float_type)
+    X[-1] = D[-1]
+
+    for i in range( n - 2, -1, -1 ):
+        X[i] = D[i] - C[i] * X[i + 1]
+
+    return X
+
 #### MATRIX GENERATIONS ####
 
 def generate_x_vector(n, float_type):
@@ -83,6 +107,23 @@ def generate_second_matrix(n, float_type):
             A[j][i] = A[i][j]
     return A
 
+def generate_third_matrix(n, float_type):
+
+    k = m = 5.0
+    
+    main_diag = np.ones(n) * k
+    upper_diag = np.zeros(n-1)
+    bottom_diag = np.zeros(n-1)
+
+    for i in range(n - 1):
+        upper_diag[i] = 1 / (i + m)
+        bottom_diag[i] = k / (i + m + 1)
+    
+    offsets = np.array([0,1,-1])
+
+    return sp.sparse.diags([main_diag, upper_diag, bottom_diag], offsets, shape = (n,n)).toarray()
+    
+
 #### CONSTANTS ####
 
 matrix_sizes = [
@@ -93,6 +134,8 @@ matrix_sizes = [
 ]
 
 float_types = [np.float16, np.float32, np.float64]
+
+#### UTILS ####
 
 def count_condition(matrix):
     return np.linalg.norm(matrix) * np.linalg.norm(invert_matrix(matrix))
@@ -185,3 +228,24 @@ def invert_matrix(M):
 
     # return inverse matrix
     return M[:, n:]
+
+#### TASKS ####
+
+print("Task 1. cond")
+get_conditions(generate_first_matrix)
+print("Task 2. cond")
+get_conditions(generate_second_matrix)
+
+print("Task 1.")
+test_matrix(generate_first_matrix)
+print("Task 2.")
+test_matrix(generate_second_matrix)
+
+print("Task 3. cond")
+
+get_conditions(generate_third_matrix)
+print("Task 3. : Thomas")
+test_matrix(generate_third_matrix, thomas_solver)
+print("Task 3. : Gauss")
+test_matrix(generate_third_matrix, gauss_solver)
+#### TASKS ####
