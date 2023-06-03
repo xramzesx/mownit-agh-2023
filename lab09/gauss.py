@@ -1,6 +1,8 @@
 import numpy as np
 import scipy as sp
 
+import time
+
 def gauss_solver(A, B, float_type):
     AB = np.hstack((A,B))
 
@@ -51,6 +53,8 @@ def gauss_solver(A, B, float_type):
 
 
 def thomas_solver(A, B, float_type):
+    # AB = np.hstack((A,B)).astype(float_type)
+    # count coefficients:
     n = len(B)
     
     C = np.zeros(n).astype(float_type)
@@ -137,8 +141,50 @@ float_types = [np.float16, np.float32, np.float64]
 
 #### UTILS ####
 
+def invert_matrix(matrix):
+    # store dimension
+    n = len(matrix)
+
+    # identity matrix with same shape as A
+    I = np.identity(n=n)
+
+    # form the augmented matrix by concatenating A and I
+    matrix = np.concatenate((matrix, I), axis=1)
+
+    # move all zeros to buttom of matrix
+    matrix = np.concatenate((matrix[np.any(matrix != 0, axis=1)], matrix[np.all(matrix == 0, axis=1)]), axis=0)
+
+    for i in range(n):
+        pivot = matrix[i][i]
+
+        for j in range(1, n):
+            if pivot != 0 or i + j >= n:
+                break
+
+            # swap rows
+            matrix[[i, i + j]] = matrix[[i + j, i]]
+            pivot = matrix[i][i]
+
+        if pivot == 0:
+            return matrix[:, n:]
+        
+        # extract row
+        row = matrix[i]
+
+        # get 1 along the diagonal
+        matrix[i] = row / pivot
+
+        for j in range(n):
+            if j == i: continue
+            matrix[j] = matrix[j] - matrix[i] * matrix[j][i]
+
+    return matrix[:, n:]
+
+
 def count_condition(matrix):
     return np.linalg.norm(matrix) * np.linalg.norm(invert_matrix(matrix))
+
+#### TESTS ####
 
 def test_matrix(generate_matrix, solver = gauss_solver):
     global matrix_sizes, float_types
@@ -159,6 +205,28 @@ def test_matrix(generate_matrix, solver = gauss_solver):
             print(f"{norm:.6e}", end="\t")
         print()
 
+def time_test_matrix(generate_matrix, solver = gauss_solver):
+    global matrix_sizes, float_types
+
+    print("n", end="\t")
+    for float_type in float_types:
+        print(float_type.__name__, end="\t")
+    print()
+
+    for n in matrix_sizes:
+        print(n, end="\t")
+        for float_type in float_types:
+            A = generate_matrix(n, float_type)
+            X = generate_x_vector(n, float_type)
+            B = A @ X
+
+            start_time = time.perf_counter()
+            solved_X = solver(A, B, float_type)
+            end_time = time.perf_counter()
+            print(f"{end_time - start_time:.6e}", end="\t")
+        print()
+
+
 def get_conditions(generate_matrix):
     global matrix_sizes, float_types
 
@@ -170,66 +238,13 @@ def get_conditions(generate_matrix):
     for n in matrix_sizes:
         print(n, end="\t")
         for float_type in float_types:
-
             print(f"{count_condition(generate_matrix(n, float_type)):.6e}", end="\t")
         print()
 
-def invert_matrix(M):
-    # store dimension
-    n = M.shape[0]
-
-    # A must be square with non-zero determinant
-    # assert np.linalg.det(M) != 0
-
-    # identity matrix with same shape as A
-    I = np.identity(n=n)
-
-    # form the augmented matrix by concatenating A and I
-    M = np.concatenate((M, I), axis=1)
-
-    # move all zeros to buttom of matrix
-    M = np.concatenate((M[np.any(M != 0, axis=1)], M[np.all(M == 0, axis=1)]), axis=0)
-
-    # iterate over matrix rows
-    for i in range(0, n):
-
-        # initialize row-swap iterator
-        j = 1
-
-        # select pivot value
-        pivot = M[i][i]
-
-        # find next non-zero leading coefficient
-        while pivot == 0 and i + j < n:
-            # perform row swap operation
-            M[[i, i + j]] = M[[i + j, i]]
-
-            # incrememnt row-swap iterator
-            j += 1
-
-            # get new pivot
-            pivot = M[i][i]
-
-        # if pivot is zero, remaining rows are all zeros
-        if pivot == 0:
-            # return inverse matrix
-            return M[:, n:]
-
-        # extract row
-        row = M[i]
-
-        # get 1 along the diagonal
-        M[i] = row / pivot
-
-        # iterate over all rows except pivot to get augmented matrix into reduced row echelon form
-        for j in [k for k in range(0, n) if k != i]:
-            # subtract current row from remaining rows
-            M[j] = M[j] - M[i] * M[j][i]
-
-    # return inverse matrix
-    return M[:, n:]
 
 #### TASKS ####
+
+n = 10
 
 print("Task 1. cond")
 get_conditions(generate_first_matrix)
@@ -242,10 +257,10 @@ print("Task 2.")
 test_matrix(generate_second_matrix)
 
 print("Task 3. cond")
-
 get_conditions(generate_third_matrix)
+
 print("Task 3. : Thomas")
 test_matrix(generate_third_matrix, thomas_solver)
+
 print("Task 3. : Gauss")
 test_matrix(generate_third_matrix, gauss_solver)
-#### TASKS ####
