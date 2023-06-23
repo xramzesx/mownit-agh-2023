@@ -1,4 +1,4 @@
-## Laboratorium 2.
+## Laboratorium 2: Interpolacja w zagadnieniu Lagrange'a oraz Newtona
 
 Dla jednej z poniższych funkcji _(podanej w zadaniu indywidualnym)_ wyznacz dla zagadnienia
 Lagrange’a wielomian interpolujący w postaci Lagrange’a i Newtona.

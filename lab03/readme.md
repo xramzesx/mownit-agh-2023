@@ -1,4 +1,4 @@
-## Laboratorium 3.
+## Laboratorium 3: Interpolacja w zagadnieniu Hermite'a
 
 ### Polecenie
 
