@@ -1,4 +1,4 @@
-## Laboratorium 4: Funkcje sklejane
+## Laboratorium 4: Interpolacja z wykorzystaniem funkcji sklejanych (spline)
 
 ### Polecenie
 
